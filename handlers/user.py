@@ -45,9 +45,12 @@ async def start(message: Message, state: FSMContext):
 
         else:
             await message.answer(
-                "Для связи с нашим менеджером заполните анкету по примеру:\n\n"
-                "1. Ваш город\n2.Ваш возраст\n\n"
-                "Например: Москва, 41"
+                """Для связи с нашим менеджером заполните анкету по примеру:
+                
+                1. Ваш город
+                2.Ваш возраст
+                
+                Например: Москва, 41"""
             )
 
             await state.set_state(RegistrationState.data)
@@ -60,31 +63,14 @@ async def start(message: Message, state: FSMContext):
 @router.message(F.text, StateFilter(RegistrationState.data))
 async def register(message: Message, state: FSMContext):
     try:
-        parts = message.text.split(",")
-        if len(parts) != 2:
-            await message.answer("❌ Неверный формат\nПример: <code>Москва, 41</code>", parse_mode="HTML")
-            return
-
-        city = parts[0].strip()
-        age_str = parts[1].strip()
-
-        if not age_str.isdigit():
-            await message.answer("❌ Укажите корректный возраст (от 16 до 65 лет).")
-            return
-
-        age = int(age_str)
-        if age < 16 or age > 65:
-            await message.answer("❌ Укажите корректный возраст (от 16 до 65 лет).")
-            return
-
         manager_id = await get_next_manager_id()
         manager = await get_manager_by_id(manager_id)
 
         await create_user(
             tg_id=message.from_user.id,
             manager_id=manager_id,
-            city=city,
-            age=age
+            city=message.text,  # Сохраняем весь текст как "город"
+            age=0  # Устанавливаем возраст как 0 или любое дефолтное значение
         )
 
         await message.answer(
